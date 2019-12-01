@@ -6,12 +6,15 @@
 
 #include "semver.h"
 
-#define MAX_LEN 257
+#define MAX_LEN 4097
 
 
 bool quiet = false;
 bool reverse = false;
 bool help = false;
+bool only_ver = false;
+char sep = ' ';
+int field = 1;
 
 
 int compare_func(const void *pindex1, const void *pindex2, void *data) {
@@ -28,7 +31,7 @@ int compare_func(const void *pindex1, const void *pindex2, void *data) {
 }
 
 int main(int argc, char *argv[]) {
-    char line[MAX_LEN], **versions = NULL;
+    char line[MAX_LEN], c, *s, *t, *line_copy, **lines = NULL;
     int i, len, count = 0, *indexes;
     semver_t *semvers = NULL, semver;
 
@@ -43,6 +46,27 @@ int main(int argc, char *argv[]) {
         else if (!strcmp(argv[i], "-h")) {
             help = true;
         }
+        else if (!strcmp(argv[i], "-v")) {
+            only_ver = true;
+        }
+        else if (!strcmp(argv[i], "-t")) {
+            if (argc <= i + 1) {
+                break;
+            }
+
+            sep = argv[i++ + 1][0];
+        }
+        else if (!strcmp(argv[i], "-k")) {
+            if (argc <= i + 1) {
+                help = true;
+                break;
+            }
+
+            field = strtol(argv[i++ + 1], NULL, 10);
+            if (field < 1) {
+                field = 1;
+            }
+        }
         else {
             help = true;
         }
@@ -52,10 +76,13 @@ int main(int argc, char *argv[]) {
         printf("Usage: <versions> | semver-sort [options]\n");
         printf("Sort all semver-valid versions at input and write them at output.\n");
         printf("Available options:\n");
-        printf("\t-h\tshow this help\n");
-        printf("\t-r\tsort descending\n");
-        printf("\t-q\tdo not print any messages\n");
-        
+        printf("\t-h         show this help\n");
+        printf("\t-k <num>   extract and use field <num> instead of all line (starts at 1)\n");
+        printf("\t-r         sort descending\n");
+        printf("\t-t <char>  use <char> as field separator (defaults to space)\n");
+        printf("\t-q         do not print any messages\n");
+        printf("\t-v         print only versions, not entire lines\n");
+
         return -1;
     }
 
@@ -76,18 +103,36 @@ int main(int argc, char *argv[]) {
             continue;
         }
         
-        if (semver_parse(line, &semver)) {
+        /* Extract version from line */
+        i = 0;
+        s = line_copy = strdup(line);
+        while (i < field && (t = strsep(&s, &sep))) {
+            i++;
+        }
+        
+        if (i < field) {
             if (!quiet) {
-                fprintf(stderr, "Invalid semver: %s\n", line);
+                fprintf(stderr, "Field %d not found in %s\n", field, line);
             }
+            free(line_copy);
             continue;
         }
 
-        versions = realloc(versions, sizeof(char *) * (count + 1));
-        versions[count] = strdup(line);
+        if (semver_parse(t, &semver)) {
+            if (!quiet) {
+                fprintf(stderr, "Invalid semver: %s\n", line);
+            }
+            free(line_copy);
+            continue;
+        }
+        
+        lines = realloc(lines, sizeof(char *) * (count + 1));
+        lines[count] = strdup(only_ver ? t : line);
 
         semvers = realloc(semvers, sizeof(semver_t) * (count + 1));
         semvers[count++] = semver;
+
+        free(line_copy);
     }
     
     /* Actual sorting */
@@ -97,17 +142,17 @@ int main(int argc, char *argv[]) {
     }
     qsort_r(indexes, count, sizeof(int), &compare_func, semvers);
     
-    /* Print sorted versions */
+    /* Print sorted lines */
     for (i = 0; i < count; i++) {
-        printf("%s\n", versions[indexes[i]]);
+        printf("%s\n", lines[indexes[i]]);
     }
 
     /* Free everything */
     for (i = 0; i < count; i++) {
-        free(versions[i]);
+        free(lines[i]);
         semver_free(&semvers[i]);
     }
-    free(versions);
+    free(lines);
     free(semvers);
     free(indexes);
 
