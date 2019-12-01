@@ -31,7 +31,7 @@ int compare_func(const void *pindex1, const void *pindex2, void *data) {
 }
 
 int main(int argc, char *argv[]) {
-    char line[MAX_LEN], c, *s, *t, *line_copy, **lines = NULL;
+    char line[MAX_LEN], *s, *t, *line_copy, **lines = NULL;
     int i, len, count = 0, *indexes;
     semver_t *semvers = NULL, semver;
 
