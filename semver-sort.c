@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <semver.h>
+
+#include "semver.h"
 
 #define MAX_LEN 257
 
