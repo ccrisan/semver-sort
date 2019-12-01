@@ -8,6 +8,8 @@ ifneq ($(DEBUG),)
 CFLAGS += -g -DDEBUG=1
 endif
 
+al: semver-sort
+
 test: semver.c semver_test.c
 	@$(CC) $(CFLAGS) -o $@ $^
 	@./$@
