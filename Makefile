@@ -1,5 +1,5 @@
 CC      ?= cc
-CFLAGS   = -std=c89 -Ideps -Wall -Wextra -pedantic -Wno-missing-field-initializers -Wno-unused-function -Wno-declaration-after-statement
+CFLAGS   = -Ideps -Wall -Wextra -pedantic -Wno-missing-field-initializers -Wno-unused-function -Wno-declaration-after-statement -D_GNU_SOURCE
 VALGRIND = valgrind
 RM       = rm -rf
 
@@ -15,6 +15,9 @@ test: semver.c semver_test.c
 unittest: semver_unit.c
 	@$(CC) $(CFLAGS) -o $@ $^
 	@./$@
+
+semver-sort: semver.c semver-sort.c
+	$(CC) $(CFLAGS) -o $@ $^
 
 valgrind: ./test
 	@$(VALGRIND) --leak-check=full --error-exitcode=1 $^
