@@ -16,3 +16,7 @@ Originally cloned from https://github.com/h2non/semver.c, with the addition of `
     -t <char>  use <char> as field separator (defaults to space)
     -q         do not print any messages
     -v         print only versions, not entire lines
+
+# Binaries
+
+Grab your binaries from [release assets](https://github.com/ccrisan/semver-sort/releases).
